@@ -1,0 +1,6 @@
+[flake8]
+ignore = reportMissingImports
+max-line-length = 150
+ignore = E501
+ignore = E303
+ignore = E402
