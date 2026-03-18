@@ -1,13 +1,11 @@
 import streamlit as st
 import sys
 import os
-import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-import plotly.express as px
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from core.data import load_barttorvik, load_trained_model, get_all_tournament_teams, BRACKET_2026, CURRENT_YEAR
+from core.data import load_barttorvik, load_trained_model, get_all_tournament_teams, CURRENT_YEAR
 from core.model import predict_matchup, project_score, monte_carlo_scores
 
 st.set_page_config(page_title="Head-to-Head", page_icon="⚔️", layout="wide")
@@ -82,7 +80,11 @@ st.markdown("""
         text-align: center;
     }
     section[data-testid="stSidebar"] {
-        background-color: #94a68e;
+        background-color: #0d1220;
+        border-right: 1px solid #1e2a45;
+    }
+    section[data-testid="stSidebar"] .stMarkdown p {
+        color: #8892a4;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -129,7 +131,7 @@ if not a_stats or not b_stats:
     st.error("Stats not found for one or both teams.")
     st.stop()
 
-run = st.button("⚡ Run Matchup Analysis", type="primary", use_container_width=True)
+run = st.button("⚡ Run Matchup Analysis", type="primary", width='stretch')
 
 if run or "h2h_results" in st.session_state and st.session_state.get("h2h_teams") == (team_a, team_b):
     if run:
@@ -263,7 +265,7 @@ if run or "h2h_results" in st.session_state and st.session_state.get("h2h_teams"
             font=dict(family="Source Sans 3", color="#000000"),
             height=400,
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
         margins = mc["scores_a"] - mc["scores_b"]
         fig2 = go.Figure()
         fig2.add_trace(go.Histogram(
@@ -283,7 +285,7 @@ if run or "h2h_results" in st.session_state and st.session_state.get("h2h_teams"
             font=dict(family="Source Sans 3", color="#000000"),
             height=400,
         )
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, width='stretch')
     with tab_stats:
         metrics = [
             ("Record", a_stats["record"], b_stats["record"], None),
@@ -312,7 +314,7 @@ if run or "h2h_results" in st.session_state and st.session_state.get("h2h_teams"
                     pass
             comparison_data.append({"Metric": label, team_a: val_a, team_b: val_b, "Edge": edge})
         comp_df = pd.DataFrame(comparison_data)
-        st.dataframe(comp_df, use_container_width=True, hide_index=True)
+        st.dataframe(comp_df, width='stretch', hide_index=True)
         categories = ["Adj OE", "Adj DE\n(inverted)", "Eff Margin", "Barthag\n(x100)", "Win%\n(x100)"]
         a_radar = [a_stats["adj_oe"], 200 - a_stats["adj_de"], a_stats["eff_margin"], a_stats["barthag"] * 100, a_stats["win_pct"] * 100]
         b_radar = [b_stats["adj_oe"], 200 - b_stats["adj_de"], b_stats["eff_margin"], b_stats["barthag"] * 100, b_stats["win_pct"] * 100]
@@ -332,7 +334,7 @@ if run or "h2h_results" in st.session_state and st.session_state.get("h2h_teams"
             title="Team Profile Radar",
             height=450,
         )
-        st.plotly_chart(fig3, use_container_width=True)
+        st.plotly_chart(fig3, width='stretch')
     with tab_game:
         g1, g2, g3, g4 = st.columns(4)
         with g1:

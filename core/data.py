@@ -73,6 +73,8 @@ BRACKET_2026 = {
     ],
 }
 
+HISTORY_YEARS = [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025]
+
 
 def get_all_tournament_teams():
     teams = {}
@@ -96,6 +98,8 @@ def load_barttorvik(year):
         except Exception as e:
             print(e)
             return {}
+    if not os.path.exists(path):
+        return {}
     with open(path) as f:
         data = json.load(f)
     teams = {}
@@ -129,3 +133,41 @@ def load_trained_model():
             m = pickle.load(f)
         return m["lr"], m["lgb"], m["scaler"]
     return None, None, None
+
+
+@st.cache_data(ttl=86400)
+def load_tournament_history():
+    path = os.path.join(DATA_DIR, "tournament_history.json")
+    if not os.path.exists(path):
+        return []
+    with open(path) as f:
+        return json.load(f)
+
+
+def reconstruct_bracket(year, history):
+    r64 = [g for g in history if g["year"] == year and g["round"] == "R64"]
+    if len(r64) != 32:
+        return None
+    regions = []
+    for ri in range(4):
+        games = r64[ri * 8:(ri + 1) * 8]
+        teams = []
+        for g in games:
+            if g["w_seed"] <= g["l_seed"]:
+                teams.extend([(g["w_seed"], g["w_team"]), (g["l_seed"], g["l_team"])])
+            else:
+                teams.extend([(g["l_seed"], g["l_team"]), (g["w_seed"], g["w_team"])])
+        regions.append(teams)
+    return regions
+
+
+def get_actual_results(year, history):
+    round_order = ["R64", "R32", "S16", "E8", "F4", "NCG"]
+    results = {}
+    for rnd in round_order:
+        games = [g for g in history if g["year"] == year and g["round"] == rnd]
+        winners = set()
+        for g in games:
+            winners.add(g["w_team"])
+        results[rnd] = winners
+    return results

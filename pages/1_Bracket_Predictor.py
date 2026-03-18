@@ -2,12 +2,10 @@ import streamlit as st
 import sys
 import os
 import numpy as np
-import pandas as pd
-import plotly.graph_objects as go
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from core.data import load_barttorvik, load_trained_model, BRACKET_2026, CURRENT_YEAR
-from core.model import predict_matchup, apply_gear, simulate_region
+from core.model import simulate_region, _get_matchup_prob
 
 st.set_page_config(page_title="Bracket Predictor", page_icon="🏆", layout="wide")
 format_a = """
@@ -129,7 +127,7 @@ if lr_model is None:
 
 st.markdown("---")
 
-col_gear, col_sims, col_run = st.columns([2, 1, 1])
+col_gear, col_run = st.columns([3, 1])
 
 with col_gear:
     gear_labels = {
@@ -145,9 +143,6 @@ with col_gear:
         value=0,
         format_func=lambda x: f"{x:+d}  {gear_labels[x]}",
     )
-
-with col_sims:
-    n_sims = st.selectbox("Simulations per game", [1000, 5000, 10000, 25000], index=2)
 
 with col_run:
     st.markdown("<br>", unsafe_allow_html=True)
@@ -170,7 +165,7 @@ if run_bracket or "bracket_results" in st.session_state:
         progress = st.progress(0, text="Simulating bracket...")
         for i, (region_name, teams) in enumerate(BRACKET_2026.items()):
             progress.progress((i + 1) / 4, text=f"Simulating {region_name} region...")
-            rounds, champion = simulate_region(teams, bt_data, lr_model, lgb_model, scaler, gear=gear, n_sims=n_sims)
+            rounds, champion = simulate_region(teams, bt_data, lr_model, lgb_model, scaler, gear=gear, single_draw=True)
             region_rounds[region_name] = rounds
             region_winners[region_name] = champion
         progress.empty()
@@ -178,36 +173,30 @@ if run_bracket or "bracket_results" in st.session_state:
             (region_winners["East"], region_winners["South"]),
             (region_winners["West"], region_winners["Midwest"]),
         ]
+        prob_cache = {}
         ff_results = []
         ff_winners = []
         for (sa, na), (sb, nb) in ff_matchups:
-            stats_a, stats_b = bt_data.get(na), bt_data.get(nb)
-            if stats_a and stats_b:
-                prob = apply_gear(predict_matchup(stats_a, sa, stats_b, sb, lr_model, lgb_model, scaler), gear)
+            prob = _get_matchup_prob(sa, na, sb, nb, bt_data, lr_model, lgb_model, scaler, gear, prob_cache)
+            if np.random.random() < prob:
+                winner, loser, w_pct = (sa, na), (sb, nb), prob
             else:
-                prob = 0.5
-            a_wins = sum(1 for _ in range(n_sims) if np.random.random() < prob)
-            a_pct = a_wins / n_sims
-            if a_pct >= 0.5:
-                ff_winners.append((sa, na))
-                ff_results.append({"winner": na, "w_seed": sa, "w_pct": a_pct, "loser": nb, "l_seed": sb, "l_pct": 1 - a_pct})
-            else:
-                ff_winners.append((sb, nb))
-                ff_results.append({"winner": nb, "w_seed": sb, "w_pct": 1 - a_pct, "loser": na, "l_seed": sa, "l_pct": a_pct})
+                winner, loser, w_pct = (sb, nb), (sa, na), 1 - prob
+            ff_winners.append(winner)
+            ff_results.append({
+                "winner": winner[1], "w_seed": winner[0], "w_pct": w_pct,
+                "loser": loser[1], "l_seed": loser[0], "l_pct": 1 - w_pct,
+            })
         (sa, na), (sb, nb) = ff_winners[0], ff_winners[1]
-        stats_a, stats_b = bt_data.get(na), bt_data.get(nb)
-        if stats_a and stats_b:
-            prob = apply_gear(predict_matchup(stats_a, sa, stats_b, sb, lr_model, lgb_model, scaler), gear)
+        prob = _get_matchup_prob(sa, na, sb, nb, bt_data, lr_model, lgb_model, scaler, gear, prob_cache)
+        if np.random.random() < prob:
+            champion, runner_up, w_pct = (sa, na), (sb, nb), prob
         else:
-            prob = 0.5
-        a_wins = sum(1 for _ in range(n_sims) if np.random.random() < prob)
-        a_pct = a_wins / n_sims
-        if a_pct >= 0.5:
-            champion = (sa, na)
-            ncg_result = {"winner": na, "w_seed": sa, "w_pct": a_pct, "loser": nb, "l_seed": sb, "l_pct": 1 - a_pct}
-        else:
-            champion = (sb, nb)
-            ncg_result = {"winner": nb, "w_seed": sb, "w_pct": 1 - a_pct, "loser": na, "l_seed": sa, "l_pct": a_pct}
+            champion, runner_up, w_pct = (sb, nb), (sa, na), 1 - prob
+        ncg_result = {
+            "winner": champion[1], "w_seed": champion[0], "w_pct": w_pct,
+            "loser": runner_up[1], "l_seed": runner_up[0], "l_pct": 1 - w_pct,
+        }
         st.session_state["bracket_results"] = {
             "region_rounds": region_rounds,
             "region_winners": region_winners,
@@ -230,6 +219,15 @@ if run_bracket or "bracket_results" in st.session_state:
         <div class="champion-label">🏆 ({champion[0]}) {champion[1]}</div>
     </div>
     """, unsafe_allow_html=True)
+    from core.bracket_pdf import build_bracket_pdf
+    pdf_bytes = build_bracket_pdf(BRACKET_2026, region_rounds, region_winners, ff_results, ncg_result, champion, results["gear"])
+    st.download_button(
+        label="📄 Download Bracket PDF",
+        data=pdf_bytes,
+        file_name="march_madness_2026_bracket.pdf",
+        mime="application/pdf",
+        use_container_width=True,
+    )
     st.markdown("")
     st.markdown('<div class="region-title">🏟️ Final Four</div>', unsafe_allow_html=True)
     from core.bracket_svg import build_final_four_svg, build_bracket_svg
@@ -244,4 +242,7 @@ if run_bracket or "bracket_results" in st.session_state:
         with tab:
             color = region_colors[region_name]
             bracket_svg = build_bracket_svg(region_name, BRACKET_2026[region_name], results=region_rounds[region_name], color=color)
-            st.markdown(bracket_svg, unsafe_allow_html=True)
+            st.markdown(
+                f'<div style="overflow-x:auto; padding:10px 0;">{bracket_svg}</div>',
+                unsafe_allow_html=True,
+            )

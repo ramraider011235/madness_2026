@@ -69,44 +69,120 @@ def monte_carlo_scores(score_a_mean, score_b_mean, n_sims=50000, std_dev=11.0):
     }
 
 
-def simulate_region(region_teams, bt_data, lr_model, lgb_model, scaler, gear=0, n_sims=10000):
-    matchups = [(region_teams[i], region_teams[i + 1]) for i in range(0, len(region_teams), 2)]
+def _get_matchup_prob(sa, na, sb, nb, bt_data, lr_model, lgb_model, scaler, gear, cache=None):
+    key = (na, nb, gear)
+    if cache is not None and key in cache:
+        return cache[key]
+    stats_a = bt_data.get(na)
+    stats_b = bt_data.get(nb)
+    if stats_a and stats_b:
+        raw = predict_matchup(stats_a, sa, stats_b, sb, lr_model, lgb_model, scaler)
+        prob = apply_gear(raw, gear)
+    else:
+        prob = 0.5 + (sb - sa) * 0.03
+        prob = np.clip(prob, 0.05, 0.95)
+    if cache is not None:
+        cache[key] = prob
+    return prob
+
+
+def simulate_region(region_teams, bt_data, lr_model, lgb_model, scaler, gear=0, n_sims=34711, single_draw=False):
+    r1_matchups = [(region_teams[i], region_teams[i + 1]) for i in range(0, len(region_teams), 2)]
     round_names = ["Round of 64", "Round of 32", "Sweet 16", "Elite Eight"]
-    all_rounds = []
-    current = list(matchups)
-    round_num = 0
-    while len(current) > 0:
-        rname = round_names[round_num] if round_num < len(round_names) else f"Round {round_num}"
+    prob_cache = {}
+    r1_slots = []
+    for (sa, na), (sb, nb) in r1_matchups:
+        prob = _get_matchup_prob(sa, na, sb, nb, bt_data, lr_model, lgb_model, scaler, gear, prob_cache)
+        r1_slots.append(((sa, na), (sb, nb), prob))
+    if single_draw:
+        all_rounds = []
+        prev_winners = []
         round_results = []
-        next_round = []
-        for match in current:
-            (sa, na), (sb, nb) = match[0], match[1]
-            stats_a = bt_data.get(na)
-            stats_b = bt_data.get(nb)
-            if stats_a and stats_b:
-                raw = predict_matchup(stats_a, sa, stats_b, sb, lr_model, lgb_model, scaler)
-                prob = apply_gear(raw, gear)
+        for (sa, na), (sb, nb), prob in r1_slots:
+            if np.random.random() < prob:
+                winner, loser = (sa, na), (sb, nb)
+                w_pct = prob
             else:
-                prob = 0.5 + (sb - sa) * 0.03
-                prob = np.clip(prob, 0.05, 0.95)
-            a_wins = sum(1 for _ in range(n_sims) if np.random.random() < prob)
-            a_pct = a_wins / n_sims
-            if a_pct >= 0.5:
-                winner = (sa, na)
+                winner, loser = (sb, nb), (sa, na)
+                w_pct = 1 - prob
+            prev_winners.append(winner)
+            round_results.append({
+                "winner": winner[1], "w_seed": winner[0], "w_pct": w_pct,
+                "loser": loser[1], "l_seed": loser[0], "l_pct": 1 - w_pct,
+            })
+        all_rounds.append({"name": round_names[0], "games": round_results})
+        rnd = 1
+        while len(prev_winners) > 1:
+            cur_winners = []
+            round_results = []
+            for gi in range(0, len(prev_winners), 2):
+                sa, na = prev_winners[gi]
+                sb, nb = prev_winners[gi + 1]
+                prob = _get_matchup_prob(sa, na, sb, nb, bt_data, lr_model, lgb_model, scaler, gear, prob_cache)
+                if np.random.random() < prob:
+                    winner, loser = (sa, na), (sb, nb)
+                    w_pct = prob
+                else:
+                    winner, loser = (sb, nb), (sa, na)
+                    w_pct = 1 - prob
+                cur_winners.append(winner)
                 round_results.append({
-                    "winner": na, "w_seed": sa, "w_pct": a_pct,
-                    "loser": nb, "l_seed": sb, "l_pct": 1 - a_pct,
+                    "winner": winner[1], "w_seed": winner[0], "w_pct": w_pct,
+                    "loser": loser[1], "l_seed": loser[0], "l_pct": 1 - w_pct,
                 })
+            rname = round_names[rnd] if rnd < len(round_names) else f"Round {rnd}"
+            all_rounds.append({"name": rname, "games": round_results})
+            prev_winners = cur_winners
+            rnd += 1
+        return all_rounds, prev_winners[0]
+    n_r1 = len(r1_slots)
+    n_rounds = 0
+    tmp = n_r1
+    while tmp >= 1:
+        n_rounds += 1
+        tmp //= 2
+    games_per_round = [n_r1 // (2 ** r) for r in range(n_rounds)]
+    game_wins = [[{} for _ in range(gpr)] for gpr in games_per_round]
+    region_champ_counts = {}
+    for _ in range(n_sims):
+        prev_winners = []
+        for gi, ((sa, na), (sb, nb), prob) in enumerate(r1_slots):
+            if np.random.random() < prob:
+                prev_winners.append((sa, na))
             else:
-                winner = (sb, nb)
-                round_results.append({
-                    "winner": nb, "w_seed": sb, "w_pct": 1 - a_pct,
-                    "loser": na, "l_seed": sa, "l_pct": a_pct,
-                })
-            next_round.append(winner)
+                prev_winners.append((sb, nb))
+            game_wins[0][gi][prev_winners[gi]] = game_wins[0][gi].get(prev_winners[gi], 0) + 1
+        for r in range(1, n_rounds):
+            cur_winners = []
+            for gi in range(0, len(prev_winners), 2):
+                sa, na = prev_winners[gi]
+                sb, nb = prev_winners[gi + 1]
+                prob = _get_matchup_prob(sa, na, sb, nb, bt_data, lr_model, lgb_model, scaler, gear, prob_cache)
+                if np.random.random() < prob:
+                    cur_winners.append((sa, na))
+                else:
+                    cur_winners.append((sb, nb))
+                g_idx = gi // 2
+                game_wins[r][g_idx][cur_winners[-1]] = game_wins[r][g_idx].get(cur_winners[-1], 0) + 1
+            prev_winners = cur_winners
+        champ = prev_winners[0]
+        region_champ_counts[champ] = region_champ_counts.get(champ, 0) + 1
+    all_rounds = []
+    for r in range(n_rounds):
+        rname = round_names[r] if r < len(round_names) else f"Round {r}"
+        round_results = []
+        for gi, counts in enumerate(game_wins[r]):
+            teams_sorted = sorted(counts.items(), key=lambda x: x[1], reverse=True)
+            (ws, wn), w_count = teams_sorted[0]
+            if len(teams_sorted) > 1:
+                (ls, ln), l_count = teams_sorted[1]
+            else:
+                ls, ln, l_count = 0, "N/A", 0
+            total = w_count + l_count
+            round_results.append({
+                "winner": wn, "w_seed": ws, "w_pct": w_count / total,
+                "loser": ln, "l_seed": ls, "l_pct": l_count / total,
+            })
         all_rounds.append({"name": rname, "games": round_results})
-        if len(next_round) == 1:
-            return all_rounds, next_round[0]
-        current = [(next_round[i], next_round[i + 1]) for i in range(0, len(next_round), 2)]
-        round_num += 1
-    return all_rounds, None
+    best_champ = max(region_champ_counts, key=region_champ_counts.get)
+    return all_rounds, best_champ
