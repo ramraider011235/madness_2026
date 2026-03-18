@@ -64,3 +64,4 @@ curl_cffi==0.13.0
 moocore==0.2.0 
 pymoo==0.6.1.6
 lightgbm==4.6.0
+reportlab==4.4.10
