@@ -1,0 +1,485 @@
+{
+  "regions": {
+    "East": [
+      [
+        {
+          "team_a": "Duke",
+          "team_b": "Siena",
+          "winner": "Duke",
+          "winner_prob": 0.9998894919286211,
+          "loser": "Siena"
+        },
+        {
+          "team_a": "Ohio St.",
+          "team_b": "TCU",
+          "winner": "Ohio St.",
+          "winner_prob": 0.7673706514204017,
+          "loser": "TCU"
+        },
+        {
+          "team_a": "St. John's",
+          "team_b": "Northern Iowa",
+          "winner": "St. John's",
+          "winner_prob": 0.9406242738114191,
+          "loser": "Northern Iowa"
+        },
+        {
+          "team_a": "Kansas",
+          "team_b": "Cal Baptist",
+          "winner": "Kansas",
+          "winner_prob": 0.9857021891385387,
+          "loser": "Cal Baptist"
+        },
+        {
+          "team_a": "Louisville",
+          "team_b": "South Florida",
+          "winner": "Louisville",
+          "winner_prob": 0.8987957067544076,
+          "loser": "South Florida"
+        },
+        {
+          "team_a": "Michigan St.",
+          "team_b": "North Dakota St.",
+          "winner": "Michigan St.",
+          "winner_prob": 0.9947217655400525,
+          "loser": "North Dakota St."
+        },
+        {
+          "team_a": "UCLA",
+          "team_b": "UCF",
+          "winner": "UCLA",
+          "winner_prob": 0.8275146432395567,
+          "loser": "UCF"
+        },
+        {
+          "team_a": "Connecticut",
+          "team_b": "Furman",
+          "winner": "Connecticut",
+          "winner_prob": 0.999724638238683,
+          "loser": "Furman"
+        }
+      ],
+      [
+        {
+          "team_a": "Duke",
+          "team_b": "Ohio St.",
+          "winner": "Duke",
+          "winner_prob": 0.8793828495809974,
+          "loser": "Ohio St."
+        },
+        {
+          "team_a": "St. John's",
+          "team_b": "Kansas",
+          "winner": "Kansas",
+          "winner_prob": 0.5543751472052572,
+          "loser": "St. John's"
+        },
+        {
+          "team_a": "Louisville",
+          "team_b": "Michigan St.",
+          "winner": "Michigan St.",
+          "winner_prob": 0.6358840998405615,
+          "loser": "Louisville"
+        },
+        {
+          "team_a": "UCLA",
+          "team_b": "Connecticut",
+          "winner": "Connecticut",
+          "winner_prob": 0.7681353575341792,
+          "loser": "UCLA"
+        }
+      ],
+      [
+        {
+          "team_a": "Duke",
+          "team_b": "Kansas",
+          "winner": "Duke",
+          "winner_prob": 0.8003259966383129,
+          "loser": "Kansas"
+        },
+        {
+          "team_a": "Michigan St.",
+          "team_b": "Connecticut",
+          "winner": "Connecticut",
+          "winner_prob": 0.5557537745426882,
+          "loser": "Michigan St."
+        }
+      ],
+      [
+        {
+          "team_a": "Duke",
+          "team_b": "Connecticut",
+          "winner": "Duke",
+          "winner_prob": 0.6872162694084128,
+          "loser": "Connecticut"
+        }
+      ]
+    ],
+    "South": [
+      [
+        {
+          "team_a": "Florida",
+          "team_b": "Lehigh",
+          "winner": "Florida",
+          "winner_prob": 0.9999901223756027,
+          "loser": "Lehigh"
+        },
+        {
+          "team_a": "Clemson",
+          "team_b": "Iowa",
+          "winner": "Iowa",
+          "winner_prob": 0.5582009994103297,
+          "loser": "Clemson"
+        },
+        {
+          "team_a": "Vanderbilt",
+          "team_b": "McNeese St.",
+          "winner": "Vanderbilt",
+          "winner_prob": 0.9621503111522157,
+          "loser": "McNeese St."
+        },
+        {
+          "team_a": "Nebraska",
+          "team_b": "Troy",
+          "winner": "Nebraska",
+          "winner_prob": 0.9972090891393001,
+          "loser": "Troy"
+        },
+        {
+          "team_a": "North Carolina",
+          "team_b": "VCU",
+          "winner": "North Carolina",
+          "winner_prob": 0.8307162031808643,
+          "loser": "VCU"
+        },
+        {
+          "team_a": "Illinois",
+          "team_b": "Penn",
+          "winner": "Illinois",
+          "winner_prob": 0.9992267898959122,
+          "loser": "Penn"
+        },
+        {
+          "team_a": "Saint Mary's",
+          "team_b": "Texas A&M",
+          "winner": "Saint Mary's",
+          "winner_prob": 0.6578343212053535,
+          "loser": "Texas A&M"
+        },
+        {
+          "team_a": "Houston",
+          "team_b": "Idaho",
+          "winner": "Houston",
+          "winner_prob": 0.9991238023172453,
+          "loser": "Idaho"
+        }
+      ],
+      [
+        {
+          "team_a": "Florida",
+          "team_b": "Iowa",
+          "winner": "Florida",
+          "winner_prob": 0.8765482682169599,
+          "loser": "Iowa"
+        },
+        {
+          "team_a": "Vanderbilt",
+          "team_b": "Nebraska",
+          "winner": "Nebraska",
+          "winner_prob": 0.5106414454208072,
+          "loser": "Vanderbilt"
+        },
+        {
+          "team_a": "North Carolina",
+          "team_b": "Illinois",
+          "winner": "Illinois",
+          "winner_prob": 0.7951883077859679,
+          "loser": "North Carolina"
+        },
+        {
+          "team_a": "Saint Mary's",
+          "team_b": "Houston",
+          "winner": "Houston",
+          "winner_prob": 0.8052077091791032,
+          "loser": "Saint Mary's"
+        }
+      ],
+      [
+        {
+          "team_a": "Florida",
+          "team_b": "Nebraska",
+          "winner": "Florida",
+          "winner_prob": 0.7679860221349506,
+          "loser": "Nebraska"
+        },
+        {
+          "team_a": "Illinois",
+          "team_b": "Houston",
+          "winner": "Houston",
+          "winner_prob": 0.524958898036671,
+          "loser": "Illinois"
+        }
+      ],
+      [
+        {
+          "team_a": "Florida",
+          "team_b": "Houston",
+          "winner": "Florida",
+          "winner_prob": 0.5526957077842739,
+          "loser": "Houston"
+        }
+      ]
+    ],
+    "West": [
+      [
+        {
+          "team_a": "Arizona",
+          "team_b": "Long Island",
+          "winner": "Arizona",
+          "winner_prob": 0.7685247834990175,
+          "loser": "Long Island"
+        },
+        {
+          "team_a": "Villanova",
+          "team_b": "Utah St.",
+          "winner": "Villanova",
+          "winner_prob": 0.5417001343533109,
+          "loser": "Utah St."
+        },
+        {
+          "team_a": "Wisconsin",
+          "team_b": "High Point",
+          "winner": "Wisconsin",
+          "winner_prob": 0.9757532585399223,
+          "loser": "High Point"
+        },
+        {
+          "team_a": "Arkansas",
+          "team_b": "Hawaii",
+          "winner": "Arkansas",
+          "winner_prob": 0.9939229670180826,
+          "loser": "Hawaii"
+        },
+        {
+          "team_a": "BYU",
+          "team_b": "Texas",
+          "winner": "BYU",
+          "winner_prob": 0.6210239641085039,
+          "loser": "Texas"
+        },
+        {
+          "team_a": "Gonzaga",
+          "team_b": "Kennesaw St.",
+          "winner": "Gonzaga",
+          "winner_prob": 0.998914622674515,
+          "loser": "Kennesaw St."
+        },
+        {
+          "team_a": "Miami FL",
+          "team_b": "Missouri",
+          "winner": "Miami FL",
+          "winner_prob": 0.6141116087843431,
+          "loser": "Missouri"
+        },
+        {
+          "team_a": "Purdue",
+          "team_b": "Queens",
+          "winner": "Purdue",
+          "winner_prob": 0.999719169820678,
+          "loser": "Queens"
+        }
+      ],
+      [
+        {
+          "team_a": "Arizona",
+          "team_b": "Villanova",
+          "winner": "Arizona",
+          "winner_prob": 0.8942463563196327,
+          "loser": "Villanova"
+        },
+        {
+          "team_a": "Wisconsin",
+          "team_b": "Arkansas",
+          "winner": "Arkansas",
+          "winner_prob": 0.5365917082733507,
+          "loser": "Wisconsin"
+        },
+        {
+          "team_a": "BYU",
+          "team_b": "Gonzaga",
+          "winner": "Gonzaga",
+          "winner_prob": 0.7986874418781692,
+          "loser": "BYU"
+        },
+        {
+          "team_a": "Miami FL",
+          "team_b": "Purdue",
+          "winner": "Purdue",
+          "winner_prob": 0.8650424976378739,
+          "loser": "Miami FL"
+        }
+      ],
+      [
+        {
+          "team_a": "Arizona",
+          "team_b": "Arkansas",
+          "winner": "Arizona",
+          "winner_prob": 0.7566764740384411,
+          "loser": "Arkansas"
+        },
+        {
+          "team_a": "Gonzaga",
+          "team_b": "Purdue",
+          "winner": "Purdue",
+          "winner_prob": 0.580791391769413,
+          "loser": "Gonzaga"
+        }
+      ],
+      [
+        {
+          "team_a": "Arizona",
+          "team_b": "Purdue",
+          "winner": "Arizona",
+          "winner_prob": 0.6117163925878482,
+          "loser": "Purdue"
+        }
+      ]
+    ],
+    "Midwest": [
+      [
+        {
+          "team_a": "Michigan",
+          "team_b": "Howard",
+          "winner": "Michigan",
+          "winner_prob": 0.9998790131080443,
+          "loser": "Howard"
+        },
+        {
+          "team_a": "Georgia",
+          "team_b": "Saint Louis",
+          "winner": "Georgia",
+          "winner_prob": 0.6428259435540449,
+          "loser": "Saint Louis"
+        },
+        {
+          "team_a": "Texas Tech",
+          "team_b": "Akron",
+          "winner": "Texas Tech",
+          "winner_prob": 0.9544010215803053,
+          "loser": "Akron"
+        },
+        {
+          "team_a": "Alabama",
+          "team_b": "Hofstra",
+          "winner": "Alabama",
+          "winner_prob": 0.9834064380116422,
+          "loser": "Hofstra"
+        },
+        {
+          "team_a": "Tennessee",
+          "team_b": "SMU",
+          "winner": "Tennessee",
+          "winner_prob": 0.869346068023451,
+          "loser": "SMU"
+        },
+        {
+          "team_a": "Virginia",
+          "team_b": "Wright St.",
+          "winner": "Virginia",
+          "winner_prob": 0.9957723247965399,
+          "loser": "Wright St."
+        },
+        {
+          "team_a": "Kentucky",
+          "team_b": "Santa Clara",
+          "winner": "Kentucky",
+          "winner_prob": 0.5571827459621019,
+          "loser": "Santa Clara"
+        },
+        {
+          "team_a": "Iowa St.",
+          "team_b": "Tennessee St.",
+          "winner": "Iowa St.",
+          "winner_prob": 0.9998045821816424,
+          "loser": "Tennessee St."
+        }
+      ],
+      [
+        {
+          "team_a": "Michigan",
+          "team_b": "Georgia",
+          "winner": "Michigan",
+          "winner_prob": 0.9104755113914081,
+          "loser": "Georgia"
+        },
+        {
+          "team_a": "Texas Tech",
+          "team_b": "Alabama",
+          "winner": "Texas Tech",
+          "winner_prob": 0.5094661645435603,
+          "loser": "Alabama"
+        },
+        {
+          "team_a": "Tennessee",
+          "team_b": "Virginia",
+          "winner": "Tennessee",
+          "winner_prob": 0.5197907938501839,
+          "loser": "Virginia"
+        },
+        {
+          "team_a": "Kentucky",
+          "team_b": "Iowa St.",
+          "winner": "Iowa St.",
+          "winner_prob": 0.8087590276313366,
+          "loser": "Kentucky"
+        }
+      ],
+      [
+        {
+          "team_a": "Michigan",
+          "team_b": "Texas Tech",
+          "winner": "Michigan",
+          "winner_prob": 0.7240281771355559,
+          "loser": "Texas Tech"
+        },
+        {
+          "team_a": "Tennessee",
+          "team_b": "Iowa St.",
+          "winner": "Iowa St.",
+          "winner_prob": 0.623127240727044,
+          "loser": "Tennessee"
+        }
+      ],
+      [
+        {
+          "team_a": "Michigan",
+          "team_b": "Iowa St.",
+          "winner": "Michigan",
+          "winner_prob": 0.6591298932797152,
+          "loser": "Iowa St."
+        }
+      ]
+    ]
+  },
+  "final_four": [
+    {
+      "team_a": "Duke",
+      "team_b": "Florida",
+      "winner": "Duke",
+      "winner_prob": 0.5632475681795552
+    },
+    {
+      "team_a": "Arizona",
+      "team_b": "Michigan",
+      "winner": "Michigan",
+      "winner_prob": 0.5241694415881719
+    },
+    {
+      "team_a": "Duke",
+      "team_b": "Michigan",
+      "winner": "Duke",
+      "winner_prob": 0.5438740956865366
+    }
+  ],
+  "champion": "Duke"
+}

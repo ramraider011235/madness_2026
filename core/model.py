@@ -4,30 +4,44 @@ import pandas as pd
 FEATURE_COLS = [
     "seed_diff", "oe_diff", "de_diff", "eff_margin_diff",
     "barthag_diff", "rank_diff", "win_pct_diff", "tempo_diff",
-    "oe_rank_diff", "de_rank_diff",
+    "oe_rank_diff", "de_rank_diff", "sos_diff", "luck_diff",
+    "experience_diff", "away_oe_diff", "away_de_diff",
+    "conf_rank_diff", "seed_eff_margin_interact",
+    "tempo_mismatch", "consistency_diff",
 ]
 AVG_TEMPO = 67.5
 AVG_EFF = 107.0
 
 
 def predict_matchup(a_stats, a_seed, b_stats, b_seed, lr_model, lgb_model, scaler):
+    seed_diff = a_seed - b_seed
+    eff_margin_diff = a_stats["eff_margin"] - b_stats["eff_margin"]
     features = pd.DataFrame([[
-        a_seed - b_seed,
+        seed_diff,
         a_stats["adj_oe"] - b_stats["adj_oe"],
         a_stats["adj_de"] - b_stats["adj_de"],
-        a_stats["eff_margin"] - b_stats["eff_margin"],
+        eff_margin_diff,
         a_stats["barthag"] - b_stats["barthag"],
         a_stats["rank"] - b_stats["rank"],
         a_stats["win_pct"] - b_stats["win_pct"],
         a_stats["adj_tempo"] - b_stats["adj_tempo"],
         a_stats["adj_oe_rank"] - b_stats["adj_oe_rank"],
         a_stats["adj_de_rank"] - b_stats["adj_de_rank"],
+        a_stats.get("sos", 0.5) - b_stats.get("sos", 0.5),
+        a_stats.get("luck", 0.5) - b_stats.get("luck", 0.5),
+        a_stats.get("experience", 1.0) - b_stats.get("experience", 1.0),
+        a_stats.get("away_oe", a_stats["adj_oe"]) - b_stats.get("away_oe", b_stats["adj_oe"]),
+        a_stats.get("away_de", a_stats["adj_de"]) - b_stats.get("away_de", b_stats["adj_de"]),
+        a_stats.get("conf_rank", 5.0) - b_stats.get("conf_rank", 5.0),
+        seed_diff * eff_margin_diff,
+        abs(a_stats["adj_tempo"] - b_stats["adj_tempo"]),
+        a_stats.get("consistency", 0) - b_stats.get("consistency", 0),
     ]], columns=FEATURE_COLS)
     X = pd.DataFrame(scaler.transform(features), columns=FEATURE_COLS)
     lr_prob = lr_model.predict_proba(X)[0][1]
     if lgb_model:
         lgb_prob = lgb_model.predict_proba(X)[0][1]
-        return 0.65 * lr_prob + 0.35 * lgb_prob
+        return 0.55 * lr_prob + 0.45 * lgb_prob
     return lr_prob
 
 

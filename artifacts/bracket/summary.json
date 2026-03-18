@@ -1,0 +1,12 @@
+{
+  "model_mode": "heuristic",
+  "matchup_metrics": {},
+  "score_metrics": {
+    "mode": "formula",
+    "margin_sd": 10.5,
+    "total_sd": 13.5
+  },
+  "champion_pick": "Duke",
+  "advance_probabilities_csv": "artifacts\\bracket\\advance_probabilities.csv",
+  "deterministic_bracket_json": "artifacts\\bracket\\deterministic_bracket.json"
+}

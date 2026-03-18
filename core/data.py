@@ -73,8 +73,6 @@ BRACKET_2026 = {
     ],
 }
 
-HISTORY_YEARS = [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025]
-
 
 def get_all_tournament_teams():
     teams = {}
@@ -98,8 +96,6 @@ def load_barttorvik(year):
         except Exception as e:
             print(e)
             return {}
-    if not os.path.exists(path):
-        return {}
     with open(path) as f:
         data = json.load(f)
     teams = {}
@@ -110,19 +106,35 @@ def load_barttorvik(year):
             parts = rec.split('-')
             wins, losses = int(parts[0]), int(parts[1])
         total = wins + losses if (wins + losses) > 0 else 1
+        adj_oe = t[4] if len(t) > 4 else 100.0
+        adj_de = t[6] if len(t) > 6 else 100.0
+        away_oe = t[29] if len(t) > 29 else adj_oe
+        away_de = t[30] if len(t) > 30 else adj_de
+        home_oe = t[27] if len(t) > 27 else adj_oe
+        home_de = t[28] if len(t) > 28 else adj_de
         teams[t[1]] = {
             "rank": t[0], "conf": t[2], "record": rec,
             "wins": wins, "losses": losses, "win_pct": wins / total,
-            "adj_oe": t[4] if len(t) > 4 else 100.0,
+            "adj_oe": adj_oe,
             "adj_oe_rank": t[5] if len(t) > 5 else 180,
-            "adj_de": t[6] if len(t) > 6 else 100.0,
+            "adj_de": adj_de,
             "adj_de_rank": t[7] if len(t) > 7 else 180,
             "barthag": t[8] if len(t) > 8 else 0.5,
             "barthag_rank": t[9] if len(t) > 9 else 180,
             "adj_tempo": t[44] if len(t) > 44 else 67.0,
-            "eff_margin": (t[4] - t[6]) if len(t) > 6 else 0.0,
+            "eff_margin": adj_oe - adj_de,
+            "sos": t[15] if len(t) > 15 else 0.5,
+            "luck": t[31] if len(t) > 31 else 0.5,
+            "experience": t[41] if len(t) > 41 else 1.0,
+            "away_oe": away_oe,
+            "away_de": away_de,
+            "conf_rank": t[13] if len(t) > 13 else 5.0,
+            "consistency": abs(away_oe - home_oe) + abs(away_de - home_de),
         }
     return teams
+
+
+HISTORY_YEARS = [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025]
 
 
 @st.cache_resource
@@ -135,7 +147,6 @@ def load_trained_model():
     return None, None, None
 
 
-@st.cache_data(ttl=86400)
 def load_tournament_history():
     path = os.path.join(DATA_DIR, "tournament_history.json")
     if not os.path.exists(path):
@@ -145,29 +156,55 @@ def load_tournament_history():
 
 
 def reconstruct_bracket(year, history):
-    r64 = [g for g in history if g["year"] == year and g["round"] == "R64"]
-    if len(r64) != 32:
+    r64_games = [g for g in history if g["year"] == year and g["round"] == "R64"]
+    if len(r64_games) < 32:
         return None
-    regions = []
-    for ri in range(4):
-        games = r64[ri * 8:(ri + 1) * 8]
-        teams = []
-        for g in games:
-            if g["w_seed"] <= g["l_seed"]:
-                teams.extend([(g["w_seed"], g["w_team"]), (g["l_seed"], g["l_team"])])
-            else:
-                teams.extend([(g["l_seed"], g["l_team"]), (g["w_seed"], g["w_team"])])
-        regions.append(teams)
-    return regions
+    SEED_ORDER = [1, 16, 8, 9, 5, 12, 4, 13, 6, 11, 3, 14, 7, 10, 2, 15]
+    all_teams = {}
+    for g in r64_games:
+        all_teams[(g["w_seed"], g["w_team"])] = True
+        all_teams[(g["l_seed"], g["l_team"])] = True
+    by_seed = {}
+    for seed, name in all_teams:
+        by_seed.setdefault(seed, []).append(name)
+    regions = [[], [], [], []]
+    seed_idx = {}
+    for seed in SEED_ORDER:
+        teams_at_seed = by_seed.get(seed, [])
+        for team in teams_at_seed:
+            idx = seed_idx.get(seed, 0)
+            if idx < 4:
+                regions[idx].append((seed, team))
+            seed_idx[seed] = idx + 1
+    valid_regions = [r for r in regions if len(r) == 16]
+    if len(valid_regions) < 4:
+        teams_flat = []
+        for g in r64_games:
+            teams_flat.append((g["w_seed"], g["w_team"]))
+            teams_flat.append((g["l_seed"], g["l_team"]))
+        seen = set()
+        unique = []
+        for s, n in teams_flat:
+            if n not in seen:
+                seen.add(n)
+                unique.append((s, n))
+        regions = []
+        for i in range(0, len(unique), 16):
+            chunk = unique[i:i + 16]
+            if len(chunk) == 16:
+                regions.append(chunk)
+        if len(regions) < 4:
+            return None
+        return regions
+    return valid_regions
 
 
 def get_actual_results(year, history):
-    round_order = ["R64", "R32", "S16", "E8", "F4", "NCG"]
     results = {}
-    for rnd in round_order:
-        games = [g for g in history if g["year"] == year and g["round"] == rnd]
-        winners = set()
-        for g in games:
-            winners.add(g["w_team"])
-        results[rnd] = winners
+    yr_games = [g for g in history if g["year"] == year]
+    for g in yr_games:
+        rnd = g["round"]
+        if rnd not in results:
+            results[rnd] = set()
+        results[rnd].add(g["w_team"])
     return results

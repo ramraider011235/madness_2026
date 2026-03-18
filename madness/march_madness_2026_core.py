@@ -134,6 +134,17 @@ def _parse_bart_json_rows(rows):
     frame = frame.sort_values(["rank", "team"]).drop_duplicates("team_norm", keep="first").reset_index(drop=True)
     return frame
 
+def _decode_bart_snapshot_bytes(content):
+    content = bytes(content)
+    if content[:2] == b"\x1f\x8b":
+        decoded = gzip.decompress(content).decode("utf-8")
+    else:
+        decoded = content.decode("utf-8", errors="ignore")
+    rows = json.loads(decoded)
+    if not isinstance(rows, list):
+        raise ValueError("Bart snapshot payload was not a JSON list")
+    return rows
+
 def load_bart_team_snapshot(year, snapshot_date=None, cache_dir="cache"):
     cache_dir = Path(cache_dir)
     if snapshot_date is None:
@@ -150,7 +161,13 @@ def load_bart_team_snapshot(year, snapshot_date=None, cache_dir="cache"):
     url = f"https://barttorvik.com/timemachine/team_results/{stamp}_team_results.json.gz"
     cache_path = cache_dir / "bart" / "timemachine" / f"{stamp}_team_results.json.gz"
     content = _fetch_bytes(url, cache_path=cache_path)
-    rows = json.loads(gzip.decompress(content).decode("utf-8"))
+    try:
+        rows = _decode_bart_snapshot_bytes(content)
+    except Exception:
+        fallback_url = f"https://barttorvik.com/timemachine/team_results/{stamp}_team_results.json"
+        fallback_cache_path = cache_dir / "bart" / "timemachine" / f"{stamp}_team_results.json"
+        fallback_content = _fetch_bytes(fallback_url, cache_path=fallback_cache_path)
+        rows = _decode_bart_snapshot_bytes(fallback_content)
     return _parse_bart_json_rows(rows)
 
 def load_current_player_advanced(year, cache_dir="cache"):
@@ -231,7 +248,7 @@ def build_team_feature_table(year=2026, bracket=None, cache_dir="cache", current
         for seed, team in teams:
             team_list.append({"team": team, "team_norm": clean_team_name(team), "seed": seed, "region": region})
     teams = pd.DataFrame(team_list)
-    base = load_bart_team_snapshot(year, snapshot_date=current_date, cache_dir=cache_dir)
+    base = load_bart_team_snapshot(year, snapshot_date=current_date, cache_dir=cache_dir).drop(columns=["team"], errors="ignore")
     try:
         snapshot_7 = load_bart_team_snapshot(year, snapshot_date=current_date - dt.timedelta(days=7), cache_dir=cache_dir)[["team_norm", "barthag"]].rename(columns={"barthag": "barthag_7"})
     except Exception:
@@ -251,11 +268,17 @@ def build_team_feature_table(year=2026, bracket=None, cache_dir="cache", current
         roster = pd.DataFrame(columns=["team_norm", "roster_top1_porpag", "roster_top3_porpag", "roster_top7_min_share", "roster_exp"])
     history = build_program_history(set(teams["team_norm"]), year, cache_dir=cache_dir)
     feature_table = teams.merge(base, on="team_norm", how="left").merge(snapshot_7, on="team_norm", how="left").merge(snapshot_14, on="team_norm", how="left").merge(snapshot_30, on="team_norm", how="left").merge(conf_strength, on="conf", how="left").merge(roster, on="team_norm", how="left").merge(history, on="team_norm", how="left")
+    if "team" not in feature_table.columns:
+        if "team_x" in feature_table.columns:
+            feature_table["team"] = feature_table["team_x"]
+        elif "team_y" in feature_table.columns:
+            feature_table["team"] = feature_table["team_y"]
     feature_table["momentum_7"] = feature_table["barthag"] - feature_table["barthag_7"]
     feature_table["momentum_14"] = feature_table["barthag"] - feature_table["barthag_14"]
     feature_table["momentum_30"] = feature_table["barthag"] - feature_table["barthag_30"]
-    feature_table = feature_table.drop(columns=[c for c in ["barthag_7", "barthag_14", "barthag_30"] if c in feature_table.columns])
-    return feature_table
+    feature_table = feature_table.drop(columns=[c for c in ["barthag_7", "barthag_14", "barthag_30", "team_x", "team_y"] if c in feature_table.columns])
+    cols = ["team", "team_norm", "seed", "region"] + [c for c in feature_table.columns if c not in {"team", "team_norm", "seed", "region"}]
+    return feature_table[cols]
 
 def load_kaggle_inputs(kaggle_dir):
     if kaggle_dir is None:
@@ -640,9 +663,17 @@ def get_current_team_table(year=2026, cache_dir="cache"):
     return build_team_feature_table(year=year, cache_dir=cache_dir)
 
 def team_lookup(feature_table):
+    name_col = "team"
+    if name_col not in feature_table.columns:
+        for candidate in ["team_x", "team_y", "TeamName"]:
+            if candidate in feature_table.columns:
+                name_col = candidate
+                break
+        else:
+            raise KeyError(f"No team name column found. Columns: {list(feature_table.columns)}")
     out = {}
     for row in feature_table.to_dict("records"):
-        out[row["team"]] = row
+        out[row[name_col]] = row
     return out
 
 def adjust_probability(prob, gear=0, upset_factor=0.0):

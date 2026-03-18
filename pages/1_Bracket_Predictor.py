@@ -146,7 +146,7 @@ with col_gear:
 
 with col_run:
     st.markdown("<br>", unsafe_allow_html=True)
-    run_bracket = st.button("🚀 Simulate Bracket", type="primary", use_container_width=True)
+    run_bracket = st.button("🚀 Simulate Bracket", type="primary", width='stretch')
 
 gear_desc = {
     -2: "Strongly favoring higher seeds. Minimal upset potential.",
@@ -226,7 +226,7 @@ if run_bracket or "bracket_results" in st.session_state:
         data=pdf_bytes,
         file_name="march_madness_2026_bracket.pdf",
         mime="application/pdf",
-        use_container_width=True,
+        width='stretch',
     )
     st.markdown("")
     st.markdown('<div class="region-title">🏟️ Final Four</div>', unsafe_allow_html=True)
