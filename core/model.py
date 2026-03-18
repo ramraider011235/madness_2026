@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 FEATURE_COLS = [
     "seed_diff", "oe_diff", "de_diff", "eff_margin_diff",
@@ -10,7 +11,7 @@ AVG_EFF = 107.0
 
 
 def predict_matchup(a_stats, a_seed, b_stats, b_seed, lr_model, lgb_model, scaler):
-    features = np.array([[
+    features = pd.DataFrame([[
         a_seed - b_seed,
         a_stats["adj_oe"] - b_stats["adj_oe"],
         a_stats["adj_de"] - b_stats["adj_de"],
@@ -21,8 +22,8 @@ def predict_matchup(a_stats, a_seed, b_stats, b_seed, lr_model, lgb_model, scale
         a_stats["adj_tempo"] - b_stats["adj_tempo"],
         a_stats["adj_oe_rank"] - b_stats["adj_oe_rank"],
         a_stats["adj_de_rank"] - b_stats["adj_de_rank"],
-    ]])
-    X = scaler.transform(features)
+    ]], columns=FEATURE_COLS)
+    X = pd.DataFrame(scaler.transform(features), columns=FEATURE_COLS)
     lr_prob = lr_model.predict_proba(X)[0][1]
     if lgb_model:
         lgb_prob = lgb_model.predict_proba(X)[0][1]
@@ -86,7 +87,7 @@ def _get_matchup_prob(sa, na, sb, nb, bt_data, lr_model, lgb_model, scaler, gear
     return prob
 
 
-def simulate_region(region_teams, bt_data, lr_model, lgb_model, scaler, gear=0, n_sims=34711, single_draw=False):
+def simulate_region(region_teams, bt_data, lr_model, lgb_model, scaler, gear=0, n_sims=10000, single_draw=False):
     r1_matchups = [(region_teams[i], region_teams[i + 1]) for i in range(0, len(region_teams), 2)]
     round_names = ["Round of 64", "Round of 32", "Sweet 16", "Elite Eight"]
     prob_cache = {}
